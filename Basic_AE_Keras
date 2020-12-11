@@ -1,0 +1,46 @@
+import keras
+from keras import layers
+import warnings
+warnings.simplefilter("ignore")
+from sklearn.model_selection import train_test_split
+import numpy as np
+import pandas as pd
+
+df = pd.read_csv('your_data.csv', sep='\t', index_col=False)
+training_set, test_set  = train_test_split(df, shuffle=True, test_size=.30, random_state=42)
+
+
+# This is the size of our encoded representations
+encoding_dim = 10
+input_neuron = 100
+#input
+input = keras.Input(shape=(input_neuron,))
+# "encoded" is the encoded representation of the input
+encoded = layers.Dense(encoding_dim, activation='relu')(input)
+# "decoded" is the lossy reconstruction of input data
+decoded = layers.Dense(input_neuron, activation='sigmoid')(encoded)
+
+# This model maps an input to its reconstruction
+autoencoder = keras.Model(input, decoded)
+
+# This model maps an input to its encoded representation
+encoder = keras.Model(input, encoded)
+
+# This is our encoded input
+encoded_input = keras.Input(shape=(encoding_dim,))
+# Retrieve the last layer of the autoencoder model
+decoder_layer = autoencoder.layers[-1]
+# Create the decoder model
+decoder = keras.Model(encoded_input, decoder_layer(encoded_input))
+
+autoencoder.compile(optimizer='adam', loss='MSE')
+
+autoencoder.fit(training_set, training_set,
+                epochs=50,
+                batch_size=256,
+                shuffle=True,
+                validation_data=(test_set, test_set))
+# Encode and decode 
+# Note that we take them from the *test* set
+encoded_inp = encoder.predict(test_set)
+decoded_inp = decoder.predict(encoded_inp)
