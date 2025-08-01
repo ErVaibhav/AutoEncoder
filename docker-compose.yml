@@ -1,0 +1,10 @@
+version: '3.8'
+services:
+  autoencoder:
+    build: .
+    container_name: autoencoder_app
+    volumes:
+      - .:/app
+    ports:
+      - "8888:8888"
+    command: ["jupyter", "notebook", "--ip=0.0.0.0", "--port=8888", "--allow-root", "--no-browser"]
